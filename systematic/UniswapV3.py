@@ -1,9 +1,6 @@
 from Algo import Algo
 from datetime import datetime
-import logging, sys, numpy as np, pandas as pd
-import scipy.stats as st
-import configparser
-import Utils
+import configparser, logging, sys, numpy as np, pandas as pd, scipy.stats as st, Utils
 
 class UniswapV3LP(Algo):
 
@@ -142,4 +139,4 @@ if __name__ == "__main__":
     algo.generatePositions();
     algo.positions.to_csv(positionsDir + symbol + '.csv');
     algo.pnl = Utils.calculatePnL(algo.positions);
-    algo.pnl.to_csv(positionsDir + symbol + '_PnL.csv');
+    algo.pnl.to_csv(positionsDir + symbol + '_PnL.csv', index=False);

@@ -1,4 +1,3 @@
-"use strict";
 import numpy as np
 
 Q96 = 1;
@@ -99,20 +98,18 @@ def getActiveCells(pxa, pxb, df):
         return (x > pxa) & (x < pxb);
     return df.apply(process ,axis=0);
 
-def calcIL(start, end, pxa, pxb, tokenAWeight):
-    virtualLiquidityStart = getLiquidityForAmounts(np.sqrt(start), np.sqrt(pxa), np.sqrt(pxb), 2 * tokenAWeight, 2 * (1 - tokenAWeight) * start);
-    baseLiquidityStart = getLiquidityForAmounts(np.sqrt(start), 0, 1e16, 1, start);
-    liqPercDiff = abs(virtualLiquidityStart - baseLiquidityStart)/baseLiquidityStart;
-    amountsEndwLev = getAmountsForLiquidity(np.sqrt(end), np.sqrt(pxa), np.sqrt(pxb), virtualLiquidityStart);
+def calcIL(pxi, pxf, pxa, pxb, tokenAWeight):
+    virtualLiquidityStart = getLiquidityForAmounts(np.sqrt(pxi), np.sqrt(pxa), np.sqrt(pxb), 2 * tokenAWeight, 2 * (1 - tokenAWeight) * pxi);
+    baseLiquidityStart = getLiquidityForAmounts(np.sqrt(pxi), 0, 1e16, 1, pxi);
+    amountsEndwLev = getAmountsForLiquidity(np.sqrt(pxf), np.sqrt(pxa), np.sqrt(pxb), virtualLiquidityStart);
     if (amountsEndwLev[0] and amountsEndwLev[1]):
-        valPool = amountsEndwLev[0] * end + amountsEndwLev[1];
+        valPool = amountsEndwLev[0] * pxf + amountsEndwLev[1];
     elif (amountsEndwLev[0]):
-        valPool = amountsEndwLev[0] * end;
+        valPool = amountsEndwLev[0] * pxf;
     else:
         valPool = amountsEndwLev[1];
-
-    valHodl = 1 * end * tokenAWeight * 2 + 1 * start * (1-tokenAWeight) * 2;
-    return (valPool-valHodl)/valHodl * 100;
+    valHodl = 1 * pxf * tokenAWeight * 2 + 1 * pxi * (1-tokenAWeight) * 2;
+    return (valPool - valHodl)/valHodl * 100;
 
 def getILVector(df, pxa, pxb, tokenAWeight):
     results = df.apply(lambda x: calcIL(x.iloc[0], x.iloc[-1], pxa, pxb, tokenAWeight), axis=0);
