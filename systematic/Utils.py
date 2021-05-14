@@ -81,19 +81,19 @@ def appendPosition(df, columns, data):
 def calculatePnL(positions):
     positions['fees'] = positions['cumFees'].diff(); # diff cumulative fees to make a stream of fees
     pxa = positions['low'].iloc[0]; # Lower bound
-    pxi = positions['tokenPriceA'].iloc[0]/positions['tokenPriceB'].iloc[0]; #starting price
+    pxi = positions['tokenAPrice'].iloc[0]/positions['tokenBPrice'].iloc[0]; #starting price
     pxb = positions['high'].iloc[0]; # Upper bound
     effFactor = LPMath.getEffFactor(pxa, pxi, pxb, .5); # Capital efficiency multiplier
     totalIL, fees = 0, 0;
     results = [[positions['time'].iloc[0],0,0]];
     for i in range(1,len(positions)):
-        pxf = positions['tokenPriceA'].iloc[i]/positions['tokenPriceB'].iloc[i]; # calculate new price
+        pxf = positions['tokenAPrice'].iloc[i]/positions['tokenBPrice'].iloc[i]; # calculate new price
         iL = LPMath.calcIL(pxi, pxf, pxa, pxb, .5) + totalIL; # calculate IL at each step for given position and sum w/ rolling IL
         fees += 100 * effFactor * positions['fees'].iloc[i]; # multiply by 100 to make percent return
 
         if positions['note'].iloc[i] == 'new':
             pxa = positions['low'].iloc[i];
-            pxi = positions['tokenPriceA'].iloc[i]/positions['tokenPriceB'].iloc[i];
+            pxi = positions['tokenAPrice'].iloc[i]/positions['tokenBPrice'].iloc[i];
             pxb = positions['high'].iloc[i];
             effFactor = LPMath.getEffFactor(pxa, pxi, pxb, .5);
             totalIL = iL;

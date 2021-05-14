@@ -16,13 +16,7 @@ def getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1):
     [sqrtRatioAX96, sqrtRatioBX96] = [sqrtRatioBX96, sqrtRatioAX96];
   return mulDiv(amount1, Q96, sqrtRatioBX96 - sqrtRatioAX96);
 
-def getLiquidityForAmounts(
-  sqrtRatioX96,
-  sqrtRatioAX96,
-  sqrtRatioBX96,
-  amount0,
-  amount1
-):
+def getLiquidityForAmounts(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1):
   liquidity = None;
   if (sqrtRatioAX96 > sqrtRatioBX96):
     [sqrtRatioAX96, sqrtRatioBX96] = [sqrtRatioBX96, sqrtRatioAX96];
@@ -59,12 +53,7 @@ def getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity):
     [sqrtRatioAX96, sqrtRatioBX96] = [sqrtRatioBX96, sqrtRatioAX96];
   return mulDiv(liquidity, sqrtRatioBX96 - sqrtRatioAX96, Q96);
 
-def getAmountsForLiquidity(
-  sqrtRatioX96,
-  sqrtRatioAX96,
-  sqrtRatioBX96,
-  liquidity
-):
+def getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity):
   amount0 = None;
   amount1 = None;
   if (sqrtRatioAX96 > sqrtRatioBX96):

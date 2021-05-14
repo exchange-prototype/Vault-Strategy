@@ -53,7 +53,7 @@ class UniswapV3LP(Algo):
         self.logger.info("Generating positions");
         # Downsample data according to config param
 
-        positions = {'time':[],'type':[],'fracSize':[], 'low':[],'high':[], 'note':[],'tokenPriceA':[],'tokenPriceB':[], 'cumFees':[]}
+        positions = {'time':[],'type':[],'fracSize':[], 'low':[],'high':[], 'note':[],'tokenAPrice':[],'tokenBPrice':[], 'cumFees':[]}
         end_date = self.data.index[self.rollingWindow]
         outerLeft, outerRight = np.nan, np.nan
         stopLeft, stopRight = np.nan, np.nan
@@ -64,14 +64,14 @@ class UniswapV3LP(Algo):
             close = self.data.iloc[i]['close']
             drift = self.data.iloc[i]['rollingMean'] if self.useDrift else 0
             diffusion = self.data.iloc[i]['rollingStd']
-            tokenPriceA, tokenPriceB = self.data.iloc[i]['tokenPriceA'], self.data.iloc[i]['tokenPriceB']
+            tokenAPrice, tokenBPrice = self.data.iloc[i]['tokenAPrice'], self.data.iloc[i]['tokenBPrice']
             if date < end_date:
                 # check if stopping out
                 if ((close > stopRight) or (close < stopLeft)):
                     # calculate fees during interval
                     outerLeft, stopLeft, stopRight, outerRight = Utils.getBands(close, drift, diffusion, self.rebalWindow, self.nSimulations, self.liqOuterBand, self.rebalForward)
 
-                    positions = Utils.appendPosition(positions, ['time','type','fracSize','low','high','note','tokenPriceA','tokenPriceB', 'cumFees'], [date, 'base',  1, outerLeft, outerRight, 'stop', tokenPriceA, tokenPriceB, fees])
+                    positions = Utils.appendPosition(positions, ['time','type','fracSize','low','high','note','tokenAPrice','tokenBPrice', 'cumFees'], [date, 'base',  1, outerLeft, outerRight, 'stop', tokenAPrice, tokenBPrice, fees])
                     end_date = Utils.dtFromMs(Utils.dtToMs(date) + int(self.rebalWindow*60*60*1000)) #convert rebal window to miliseconds and add to current time
                     if (self.verbose):
                         self.logger.info("-"*100);
@@ -82,7 +82,7 @@ class UniswapV3LP(Algo):
                         self.logger.info("-"*100);
 
                 else:
-                    positions = Utils.appendPosition(positions, ['time','type','fracSize','low','high','note','tokenPriceA','tokenPriceB', 'cumFees'], [date, 'base',  1, outerLeft, outerRight, 'hold', tokenPriceA, tokenPriceB, fees])
+                    positions = Utils.appendPosition(positions, ['time','type','fracSize','low','high','note','tokenAPrice','tokenBPrice', 'cumFees'], [date, 'base',  1, outerLeft, outerRight, 'hold', tokenAPrice, tokenBPrice, fees])
 
             elif date >= end_date:
                 # set new position
@@ -95,7 +95,7 @@ class UniswapV3LP(Algo):
                     self.logger.info("Measurements: close=%.3f, drift=%.4f, diffusion=%.3f" % (close, drift, diffusion));
                     self.logger.info("Paremters: outerLeft=%.2f, stopLeft=%.2f, stopRight=%.2f, outerRight=%.2f" %(outerLeft, stopLeft, stopRight, outerRight));
                     self.logger.info("-"*100);
-                positions = Utils.appendPosition(positions, ['time','type','fracSize','low','high','note','tokenPriceA','tokenPriceB','cumFees'], [date, 'base',  1, outerLeft, outerRight, 'new', tokenPriceA, tokenPriceB, fees])
+                positions = Utils.appendPosition(positions, ['time','type','fracSize','low','high','note','tokenAPrice','tokenBPrice','cumFees'], [date, 'base',  1, outerLeft, outerRight, 'new', tokenAPrice, tokenBPrice, fees])
                 end_date = Utils.dtFromMs(Utils.dtToMs(date) + int(self.rebalWindow*60*60*1000)) #convert rebal window to miliseconds and add to current time
             else:
                 print("data issue");
@@ -118,25 +118,25 @@ if __name__ == "__main__":
     stepInterval = parser.get("Data","TICK_INTERVAL");
     ## cast into minutes
     stepInterval = int(stepInterval.replace("h",""))*60 if "h" in stepInterval else int(stepInterval.replace("m",""))
-    symbol = 'WETHUSDT'
+    for symbol in ["WETHCOMP", "WETHMKR", "WETHUNI", "WETHUSDC", "WETHUSDT", "WETHWBTC"]:
 
-    algo.parseConfig({"symbol": symbol,
-                      "sdt": datetime(2021, 1, 1),
-                      "edt": datetime(2021, 5, 11),
-                      "size": 1,
-                      "dataDir": dataDir,
-                      "rollingWindow": int(24*30*60/stepInterval), # rollingWindow of 30 days
-                      "rebalWindow": int(24*3*60/stepInterval), # rebal at least every 3 days
-                      "liqOuterBand": .99, # percentile contained of anticipated forward movements in rebalWindow
-                      "rebalForward": .90, # rebalance percentile of anticipated forward movements in rebalWindow
-                      "nSimulations": 1000, # for Monte Carlo
-                      "useDrift": False, # use drift in monte carlo?
-                      "verbose": True # log trades?
-                      });
+        algo.parseConfig({"symbol": symbol,
+                          "sdt": datetime(2021, 1, 1),
+                          "edt": datetime(2021, 5, 11),
+                          "size": 1,
+                          "dataDir": dataDir,
+                          "rollingWindow": int(24*30*60/stepInterval), # rollingWindow of 30 days
+                          "rebalWindow": int(24*3*60/stepInterval), # rebal at least every 3 days
+                          "liqOuterBand": .99, # percentile contained of anticipated forward movements in rebalWindow
+                          "rebalForward": .90, # rebalance percentile of anticipated forward movements in rebalWindow
+                          "nSimulations": 1000, # for Monte Carlo
+                          "useDrift": False, # use drift in monte carlo?
+                          "verbose": True # log trades?
+                          });
 
-    algo.getData();
-    algo.generateSignal();
-    algo.generatePositions();
-    algo.positions.to_csv(positionsDir + symbol + '.csv');
-    algo.pnl = Utils.calculatePnL(algo.positions);
-    algo.pnl.to_csv(positionsDir + symbol + '_PnL.csv', index=False);
+        algo.getData();
+        algo.generateSignal();
+        algo.generatePositions();
+        algo.positions.to_csv(positionsDir + symbol + '.csv');
+        algo.pnl = Utils.calculatePnL(algo.positions);
+        algo.pnl.to_csv(positionsDir + symbol + '_PnL.csv', index=False);
